@@ -1,1 +1,51 @@
+name: Build and Prepare for Deployment
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20' # Use a current LTS version of Node.js
+        cache: 'npm' # Cache npm dependencies for faster builds
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Inject API Key
+      run: |
+        # The target file in the source code
+        TARGET_FILE="./src/services/geminiService.ts"
+        
+        # Check if the placeholder string exists before replacing
+        if [ ! -f "$TARGET_FILE" ]; then
+          echo "Error: Target file for API key injection not found at $TARGET_FILE"
+          exit 1
+        fi
+        
+        echo "Injecting API key into $TARGET_FILE..."
+        # Securely replace 'process.env.API_KEY' with the actual secret API key.
+        # The result in the file will be: new GoogleGenAI({ apiKey: 'your_actual_key' });
+        # Using pipe '|' as a separator avoids issues if the key contains slashes.
+        sed -i "s|process.env.API_KEY|'${{ secrets.API_KEY }}'|g" "$TARGET_FILE"
+        echo "API key injected."
+
+    - name: Build the application
+      run: npm run build
+
+    - name: Upload artifact for deployment
+      uses: actions/upload-artifact@v4
+      with:
+        name: production-files
+        # Vite's build output is in the 'dist' directory by default
+        path: ./dist
 
