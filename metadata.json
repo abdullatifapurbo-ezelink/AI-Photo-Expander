@@ -1,0 +1,5 @@
+{
+  "name": "AI Photo Expander",
+  "description": "An AI-powered photo editing app that expands the canvas of an uploaded photo to a selected aspect ratio (1:1, 2:3, or 4:5), intelligently filling the new area to match the background color and texture using Gemini.",
+  "requestFramePermissions": []
+}
