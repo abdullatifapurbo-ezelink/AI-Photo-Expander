@@ -1,0 +1,42 @@
+name: Build Application
+
+on:
+  push:
+    branches: [ "main" ] # This runs the build process every time you push to the main branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20' # Use a recent version of Node.js
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Build application
+      run: npm run build
+
+    - name: Inject API Key into built files
+      run: |
+        # This command finds the final JavaScript files and replaces the placeholder with your secret API key
+        JS_FILES=$(find ./dist/assets -name "*.js")
+        if [ -z "$JS_FILES" ]; then
+          echo "Error: No JavaScript files found in dist/assets. Build may have failed."
+          exit 1
+        fi
+        echo "Injecting API key into: $JS_FILES"
+        sed -i "s|process.env.API_KEY|'${{ secrets.API_KEY }}'|g" $JS_FILES
+
+    - name: Upload artifact for deployment
+      uses: actions/upload-artifact@v4
+      with:
+        name: production-files # The name of the downloadable zip file
+        path: ./dist
